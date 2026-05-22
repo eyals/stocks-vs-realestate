@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stocks vs Real Estate Calculator</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Reset & Base ───────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    body { background: #0d0d0d; color: #ccc; font-size: 13px; }
+
+    /* ── Custom Properties ──────────────────────────── */
+    :root {
+      --bg: #0d0d0d;
+      --surface: #111;
+      --surface2: #1a1a1a;
+      --border: #2a2a2a;
+      --text: #ccc;
+      --muted: #888;
+      --faint: #555;
+      --blue: #4da6ff;
+      --blue-bg: #0d1a2e;
+      --blue-border: #1a3a5a;
+      --blue-dim: #0f2240;
+      --amber: #f0a030;
+      --amber-bg: #1a0d00;
+      --amber-border: #5a2e00;
+      --amber-dim: #2a1400;
+      --red: #e05050;
+      --green: #50c878;
+      --sidebar-w: 270px;
+    }
+
+    /* ── App Shell ──────────────────────────────────── */
+    #app { display: flex; height: 100vh; overflow: hidden; }
+
+    /* ── Sidebar ────────────────────────────────────── */
+    #sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      background: #0a0a0a;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #sidebar-header {
+      font-size: 10px;
+      color: var(--faint);
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 2px 2px 4px;
+    }
+
+    /* ── Main Area ──────────────────────────────────── */
+    #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* ── Topbar ─────────────────────────────────────── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #topbar h1 { font-size: 14px; font-weight: 600; color: var(--text); letter-spacing: 0.3px; }
+    #assumptions-btn {
+      background: #1e1e1e;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 6px;
+      padding: 5px 12px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #assumptions-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+    /* ── Content Scroll ─────────────────────────────── */
+    #content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── Summary Cards ──────────────────────────────── */
+    #summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; flex-shrink: 0; }
+    .summary-card { border-radius: 10px; padding: 16px; text-align: center; }
+    .summary-card .label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .summary-card .value { font-size: 26px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .summary-card .sub { font-size: 11px; }
+    #card-stocks { background: var(--blue-bg); border: 1px solid var(--blue-border); }
+    #card-stocks .label, #card-stocks .sub { color: var(--blue); }
+    #card-re { background: var(--amber-bg); border: 1px solid var(--amber-border); }
+    #card-re .label, #card-re .sub { color: var(--amber); }
+    #card-winner { background: var(--surface); border: 1px solid var(--border); }
+    #card-winner .label, #card-winner .sub { color: var(--muted); }
+
+    /* ── Chart ──────────────────────────────────────── */
+    #chart-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      flex-shrink: 0;
+    }
+    .section-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    #chart-wrap { position: relative; height: 220px; }
+
+    /* ── Table ──────────────────────────────────────── */
+    #table-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    #table-container .section-title { padding: 12px 16px 0; }
+    #table-scroll { overflow-x: auto; }
+    #results-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    #results-table th {
+      padding: 7px 10px;
+      text-align: right;
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      background: #0f0f0f;
+      position: sticky;
+      top: 0;
+    }
+    #results-table th:first-child { text-align: center; }
+    #results-table td { padding: 6px 10px; text-align: right; border-bottom: 1px solid #161616; white-space: nowrap; }
+    #results-table td:first-child { text-align: center; color: var(--muted); }
+    #results-table tr:last-child td { border-bottom: none; }
+    #results-table tr:hover td { background: #161616; }
+    .th-stocks { color: var(--blue) !important; }
+    .th-re { color: var(--amber) !important; }
+    .pos { color: var(--green); }
+    .neg { color: var(--red); }
+    .hl-stocks { color: var(--blue); font-weight: 500; }
+    .hl-re { color: var(--amber); font-weight: 500; }
+    .refi-row td { border-top: 1px dashed var(--amber-border) !important; }
+    .sale-row td { border-top: 2px solid #444 !important; font-weight: 600; background: #0f0f0f; }
+
+    /* ── Input Groups ───────────────────────────────── */
+    .input-group { border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .input-group.group-general { background: #161616; border: 1px solid #333; }
+    .input-group.group-stocks { background: var(--blue-bg); border: 1px solid var(--blue-border); }
+    .input-group.group-re { background: var(--amber-bg); border: 1px solid var(--amber-border); }
+
+    .group-header { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding-bottom: 6px; border-bottom: 1px solid; margin-bottom: 2px; }
+    .group-general .group-header { color: var(--text); border-color: #333; }
+    .group-stocks .group-header { color: var(--blue); border-color: var(--blue-border); }
+    .group-re .group-header { color: var(--amber); border-color: var(--amber-border); }
+
+    .input-row { display: flex; flex-direction: column; gap: 3px; }
+    .input-label-row { display: flex; align-items: center; justify-content: space-between; }
+    .input-label { font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+    .input-hint { font-size: 9px; color: var(--faint); }
+
+    .input-ctrl { display: flex; align-items: center; gap: 4px; }
+    .input-ctrl button {
+      width: 24px; height: 26px;
+      border-radius: 4px; border: 1px solid;
+      cursor: pointer; font-size: 15px; font-weight: 700; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: opacity 0.1s;
+    }
+    .input-ctrl button:active { opacity: 0.6; }
+    .group-general .input-ctrl button { background: #222; border-color: #444; color: var(--text); }
+    .group-stocks .input-ctrl button { background: var(--blue-dim); border-color: var(--blue-border); color: var(--blue); }
+    .group-re .input-ctrl button { background: var(--amber-dim); border-color: var(--amber-border); color: var(--amber); }
+
+    .input-display {
+      flex: 1; background: #070707; border: 1px solid;
+      border-radius: 4px; padding: 4px 8px; color: #fff;
+      text-align: right; font-size: 12px; font-weight: 500;
+    }
+    .group-general .input-display { border-color: #333; }
+    .group-stocks .input-display { border-color: var(--blue-border); }
+    .group-re .input-display { border-color: var(--amber-border); }
+
+    /* ── Tooltip ────────────────────────────────────── */
+    .tip { position: relative; display: inline-flex; cursor: help; }
+    .tip-icon {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #2a2a2a; color: var(--muted);
+      font-size: 9px; display: flex; align-items: center; justify-content: center;
+      font-style: normal; user-select: none; flex-shrink: 0;
+    }
+    .tip:hover .tip-icon { background: #3a3a3a; color: var(--text); }
+    .tip-text {
+      display: none; position: absolute;
+      left: 50%; bottom: calc(100% + 8px);
+      transform: translateX(-50%);
+      width: 230px; background: #1e1e1e;
+      border: 1px solid #444; border-radius: 6px;
+      padding: 8px 10px; font-size: 10px; line-height: 1.55;
+      color: var(--text); z-index: 50; pointer-events: none; white-space: normal;
+    }
+    .tip:hover .tip-text { display: block; }
+
+    /* ── Modal ──────────────────────────────────────── */
+    #modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75); z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    #modal-overlay.open { display: flex; }
+    #modal-box {
+      background: #161616; border: 1px solid var(--border);
+      border-radius: 12px; padding: 24px 28px;
+      max-width: 580px; width: 90%; max-height: 82vh;
+      overflow-y: auto; position: relative;
+    }
+    #modal-box h2 { font-size: 16px; margin-bottom: 16px; color: #fff; }
+    #modal-box h3 { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 16px 0 6px; }
+    #modal-box ul { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+    #modal-box li { font-size: 12px; color: var(--text); padding-left: 14px; position: relative; line-height: 1.5; }
+    #modal-box li::before { content: '·'; position: absolute; left: 0; color: var(--muted); }
+    #modal-close { position: absolute; top: 14px; right: 16px; background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; line-height: 1; }
+    #modal-close:hover { color: var(--text); }
+
+    /* ── Scrollbars ─────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #555; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ═══════════════ SIDEBAR ═══════════════ -->
+  <div id="sidebar">
+    <div id="sidebar-header">Inputs</div>
+
+    <!-- GENERAL -->
+    <div class="input-group group-general">
+      <div class="group-header">⚙ General</div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Initial Investment
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Total cash deployed in each track. Both tracks start with exactly this amount. RE purchase closing costs and any negative cash flow years are added to the stocks track as additional investments to keep the comparison fair.</span></span>
+          </span>
+          <span class="input-hint">step $10K</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="initialInvestment" data-dir="-1">−</button>
+          <span class="input-display" id="disp-initialInvestment">$100,000</span>
+          <button data-key="initialInvestment" data-dir="1">+</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Horizon
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Years to hold both investments before selling. Typical: 15–30 yrs for a mortgage-based RE comparison. Shorter horizons favor stocks — RE has high upfront costs that take years to overcome.</span></span>
+          </span>
+          <span class="input-hint">step 5 yrs</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="horizon" data-dir="-1">−</button>
+          <span class="input-display" id="disp-horizon">30 years</span>
+          <button data-key="horizon" data-dir="1">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- S&P 500 -->
+    <div class="input-group group-stocks">
+      <div class="group-header">📈 S&amp;P 500</div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Annual Total Return
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">All-in annual return including dividends reinvested. 30yr avg (1994–2024): ~10.5%. Conservative estimate: 7–8%. Bear case: 5–6%. Bull case: 12–13%. Dividends are not taxed annually in this model — all gains taxed as LTCG at end.</span></span>
+          </span>
+          <span class="input-hint">step 0.1%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="stockReturn" data-dir="-1">−</button>
+          <span class="input-display" id="disp-stockReturn">10.5%</span>
+          <button data-key="stockReturn" data-dir="1">+</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            LTCG Tax Rate
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Long-term capital gains rate applied when selling. 0% (income &lt;$47K/yr), 15% ($47K–$518K), 20% (above $518K). Most investors fall in the 15% bracket. Applied only at final sale.</span></span>
+          </span>
+          <span class="input-hint">step 1%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="stockLtcg" data-dir="-1">−</button>
+          <span class="input-display" id="disp-stockLtcg">15%</span>
+          <button data-key="stockLtcg" data-dir="1">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RE: PROPERTY -->
+    <div class="input-group group-re">
+      <div class="group-header">🏠 Property</div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Purchase Price
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Full property purchase price. Down payment % × this determines the loan amount. Starting rent = monthly rent % × this value. Closing costs (2.5%) are calculated on this figure.</span></span>
+          </span>
+          <span class="input-hint">step $50K</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="purchasePrice" data-dir="-1">−</button>
+          <span class="input-display" id="disp-purchasePrice">$500,000</span>
+          <button data-key="purchasePrice" data-dir="1">+</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Annual Appreciation
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Case-Shiller national HPI 20yr avg: ~3.8%. Coastal metros (NYC, LA, SF): 5–7%. Midwest: 2–3%. Conservative baseline: 3%. Real appreciation (inflation-adjusted) is ~1–1.5%.</span></span>
+          </span>
+          <span class="input-hint">step 0.1%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="appreciation" data-dir="-1">−</button>
+          <span class="input-display" id="disp-appreciation">3.8%</span>
+          <button data-key="appreciation" data-dir="1">+</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Starting Rent (% of value/mo)
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Monthly rent as a % of property value. The "1% rule" (B/C class cashflow properties): 0.67–1.0%. Luxury/coastal markets (A class): 0.3–0.5%. Example: 0.3% on $500K = $1,500/mo.</span></span>
+          </span>
+          <span class="input-hint">step 0.05%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="rentPct" data-dir="-1">−</button>
+          <span class="input-display" id="disp-rentPct">0.30%</span>
+          <button data-key="rentPct" data-dir="1">+</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Annual Rent Growth
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Historical avg rent growth tracks inflation: ~3%/yr. Hot markets (2020–2022): 8–15%. Conservative: 2%. At 3% for 30yr, rent more than doubles — a key RE advantage over time.</span></span>
+          </span>
+          <span class="input-hint">step 0.1%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="rentGrowth" data-dir="-1">−</button>
+          <span class="input-display" id="disp-rentGrowth">3.0%</span>
+          <button data-key="rentGrowth" data-dir="1">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RE: MORTGAGE -->
+    <div class="input-group group-re">
+      <div class="group-header">🏠 Mortgage &amp; Financing</div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Down Payment %
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">% of purchase price paid upfront (cash). 20% is conventional — avoids PMI. Less down = more leverage but higher monthly payments. Note: initial investment is assumed fixed at the "General" amount regardless of down %.</span></span>
+          </span>
+          <span class="input-hint">step 5%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="downPct" data-dir="-1">−</button>
+          <span class="input-display" id="disp-downPct">20%</span>
+          <button data-key="downPct" data-dir="1">+</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Mortgage Rate
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">30yr fixed rate at purchase. Current (2024–2025): ~7.0–7.5%. Investor loans run ~0.5–0.75% above primary-home rates. Historical avg since 1990: ~6.5%. 2010–2021 era: 3–4%.</span></span>
+          </span>
+          <span class="input-hint">step 0.1%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="mortgageRate" data-dir="-1">−</button>
+          <span class="input-display" id="disp-mortgageRate">7.25%</span>
+          <button data-key="mortgageRate" data-dir="1">+</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Refi Rate
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Rate you expect when refinancing. If current 7%+ rates fall back toward the historical avg (~5–5.5%), a 4–5% refi is plausible within 5–15 yrs. Set Refi Year to 0 to skip refi entirely.</span></span>
+          </span>
+          <span class="input-hint">step 0.1%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="refiRate" data-dir="-1">−</button>
+          <span class="input-display" id="disp-refiRate">4.5%</span>
+          <button data-key="refiRate" data-dir="1">+</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Refi Year
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Year to refinance. Set to 0 to skip refi. Refi keeps the same payoff date (does not restart the 30yr clock). Mid-term refi (yr 7–15) is most common. Refi cost is added to that year's cash outflow.</span></span>
+          </span>
+          <span class="input-hint">step 1 · 0 = no refi</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="refiYear" data-dir="-1">−</button>
+          <span class="input-display" id="disp-refiYear">Year 10</span>
+          <button data-key="refiYear" data-dir="1">+</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Refi Cost %
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Closing costs as % of remaining loan balance. Typical: 1.5–3%. "No-cost" refis roll fees into a slightly higher rate. Set to 0 for a no-cost refi scenario.</span></span>
+          </span>
+          <span class="input-hint">step 0.1%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="refiCost" data-dir="-1">−</button>
+          <span class="input-display" id="disp-refiCost">2.0%</span>
+          <button data-key="refiCost" data-dir="1">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RE: EXPENSES -->
+    <div class="input-group group-re">
+      <div class="group-header">🏠 Expenses (% of property value/yr)</div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Maintenance
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Routine repairs: paint, fixtures, plumbing, landscaping. Rule of thumb: 1%/yr of value. Older properties (20+ yrs): 1.5–2%. New construction: 0.5%. Applied to current (appreciated) value each year.</span></span>
+          </span>
+          <span class="input-hint">step 0.1%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="maintenance" data-dir="-1">−</button>
+          <span class="input-display" id="disp-maintenance">1.0%</span>
+          <button data-key="maintenance" data-dir="1">+</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            CapEx
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Capital expenditures: roof, HVAC, water heater, appliances, flooring. Budget separately from maintenance. Rule of thumb: 1%/yr. For older properties: 1.5–2%. Applied to current value.</span></span>
+          </span>
+          <span class="input-hint">step 0.1%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="capex" data-dir="-1">−</button>
+          <span class="input-display" id="disp-capex">1.0%</span>
+          <button data-key="capex" data-dir="1">+</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Property Tax
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Annual property tax as % of current assessed value. National avg: 0.8–1.1%. High: NJ 2.5%, TX ~2.1%, IL ~2.3%. Low: HI 0.3%, CA ~0.75% (Prop 13). Varies significantly by state and county.</span></span>
+          </span>
+          <span class="input-hint">step 0.05%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="propTax" data-dir="-1">−</button>
+          <span class="input-display" id="disp-propTax">0.80%</span>
+          <button data-key="propTax" data-dir="1">+</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Insurance
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Landlord/rental property insurance (not standard homeowner's). Avg: 0.5–1%/yr of value. Includes liability coverage. Add extra for flood/hurricane zones: +0.5–1.5%. Applied to current property value.</span></span>
+          </span>
+          <span class="input-hint">step 0.05%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="insurance" data-dir="-1">−</button>
+          <span class="input-display" id="disp-insurance">0.75%</span>
+          <button data-key="insurance" data-dir="1">+</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Vacancy Rate
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">% of potential rent lost to vacancies (tenant turnover, time between leases). Rule of thumb: 5% ≈ 18 days/yr. Tight markets: 2–3%. Soft markets or rural areas: 8–12%. Applied to gross rent.</span></span>
+          </span>
+          <span class="input-hint">step 1%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="vacancy" data-dir="-1">−</button>
+          <span class="input-display" id="disp-vacancy">5%</span>
+          <button data-key="vacancy" data-dir="1">+</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Prop. Management
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Property manager fee as % of collected rent (after vacancy). Standard rate: 8–12%. Full-service (leasing + maintenance coordination): 10–15%. Self-manage = 0% but factor in your time. Set to 0 for self-management.</span></span>
+          </span>
+          <span class="input-hint">step 1% of rent</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="mgmt" data-dir="-1">−</button>
+          <span class="input-display" id="disp-mgmt">10%</span>
+          <button data-key="mgmt" data-dir="1">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RE: TAX -->
+    <div class="input-group group-re">
+      <div class="group-header">🏠 Tax</div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Marginal Tax Rate
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Your ordinary income marginal rate. Used to value Schedule E deductions (depreciation, interest, etc.). 22% ($89–$190K MFJ), 24% ($190–$364K), 32% ($364–$462K), 35% ($462–$693K), 37% above.</span></span>
+          </span>
+          <span class="input-hint">step 1%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="marginalRate" data-dir="-1">−</button>
+          <span class="input-display" id="disp-marginalRate">35%</span>
+          <button data-key="marginalRate" data-dir="1">+</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            Deprec. Recapture Rate
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">IRS Section 1250 rate on accumulated depreciation at sale. Fixed at 25% by law. Applied to the lesser of total accumulated depreciation or actual gain. Rarely changes without new tax legislation.</span></span>
+          </span>
+          <span class="input-hint">step 1% · IRS: 25%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="recaptureRate" data-dir="-1">−</button>
+          <span class="input-display" id="disp-recaptureRate">25%</span>
+          <button data-key="recaptureRate" data-dir="1">+</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-label-row">
+          <span class="input-label">
+            RE LTCG Rate
+            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Long-term capital gains rate on RE appreciation above the depreciation recapture portion. Same brackets as stocks LTCG. Most investors: 15%. Applied only to the gain remaining after depreciation recapture.</span></span>
+          </span>
+          <span class="input-hint">step 1%</span>
+        </div>
+        <div class="input-ctrl">
+          <button data-key="reLtcg" data-dir="-1">−</button>
+          <span class="input-display" id="disp-reLtcg">15%</span>
+          <button data-key="reLtcg" data-dir="1">+</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- ═══════════════ MAIN ═══════════════ -->
+  <div id="main">
+    <div id="topbar">
+      <h1>Stocks vs Real Estate — Investment Calculator</h1>
+      <button id="assumptions-btn">📋 Assumptions &amp; Model Notes</button>
+    </div>
+    <div id="content">
+
+      <!-- Summary cards -->
+      <div id="summary">
+        <div class="summary-card" id="card-stocks">
+          <div class="label">S&amp;P 500 After Tax</div>
+          <div class="value" id="stocks-value">—</div>
+          <div class="sub" id="stocks-sub">—</div>
+        </div>
+        <div class="summary-card" id="card-re">
+          <div class="label">Real Estate After Tax</div>
+          <div class="value" id="re-value">—</div>
+          <div class="sub" id="re-sub">—</div>
+        </div>
+        <div class="summary-card" id="card-winner">
+          <div class="label">Winner</div>
+          <div class="value" id="winner-value">—</div>
+          <div class="sub" id="winner-sub">—</div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div id="chart-container">
+        <div class="section-title">Portfolio Value Over Time (Pre-Tax)</div>
+        <div id="chart-wrap"><canvas id="chart"></canvas></div>
+      </div>
+
+      <!-- Table -->
+      <div id="table-container">
+        <div class="section-title">Year-by-Year Breakdown</div>
+        <div id="table-scroll">
+          <table id="results-table">
+            <thead id="table-head"></thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════ MODAL ═══════════════ -->
+  <div id="modal-overlay">
+    <div id="modal-box">
+      <button id="modal-close">×</button>
+      <h2>Model Assumptions &amp; Notes</h2>
+
+      <h3>Stocks Track</h3>
+      <ul>
+        <li>Annual Total Return includes price appreciation + dividends reinvested. Dividends are not taxed annually in this model — simplified to all gains taxed as LTCG at final sale.</li>
+        <li>Position is never sold until the end of the horizon. LTCG tax applied only at that point.</li>
+        <li>To maintain an apples-to-apples comparison, any out-of-pocket RE costs (purchase closing costs + annual negative cash flow years) are invested into the stocks track as additional capital in that year.</li>
+      </ul>
+
+      <h3>Real Estate — Property &amp; Depreciation</h3>
+      <ul>
+        <li>Building value = 80% of purchase price (IRS land/improvement split for depreciation basis).</li>
+        <li>Depreciation: straight-line over 27.5 years (residential rental property, IRS Section 168).</li>
+        <li>Purchase closing costs: 2.5% of purchase price (one-time, year 0 negative cash flow).</li>
+        <li>Selling costs: 6% of gross sale price (agent commissions, transfer taxes, etc.).</li>
+        <li>Expenses (maintenance, CapEx, property tax, insurance) applied to current appreciated property value each year.</li>
+      </ul>
+
+      <h3>Real Estate — Mortgage &amp; Refinance</h3>
+      <ul>
+        <li>Standard fixed-rate 30yr amortization schedule.</li>
+        <li>Refinance keeps the same payoff date (does not restart a new 30yr term — remaining months are re-amortized at the new rate).</li>
+        <li>Refinance cost (% of remaining balance) is treated as additional cash outflow in the refi year.</li>
+      </ul>
+
+      <h3>Real Estate — Tax Treatment</h3>
+      <ul>
+        <li>Schedule E deductions each year: mortgage interest, property tax, insurance, maintenance, CapEx, property management fee, depreciation.</li>
+        <li>Annual tax effect = − (Schedule E net income) × marginal rate. A paper loss generates a tax savings; positive income generates a tax bill.</li>
+        <li>Passive activity losses are applied in full in the year incurred (no PAL carryforward limitation — simplified).</li>
+        <li>At sale — depreciation recapture: IRS Section 1250, 25% rate on accumulated depreciation, capped at the actual total gain.</li>
+        <li>At sale — remaining capital gain (above recaptured amount) taxed at RE LTCG rate.</li>
+      </ul>
+
+      <h3>Cash Flow Recycling</h3>
+      <ul>
+        <li>Net cash flow = operating cash flow + annual tax effect (savings or bill).</li>
+        <li>Positive net cash flow → invested in an S&amp;P 500 bucket credited to the RE track (same return rate, taxed as LTCG at sale).</li>
+        <li>Negative net cash flow → out-of-pocket; same dollar amount added to the stocks track as an additional investment that year.</li>
+      </ul>
+
+      <h3>What Is Not Modeled</h3>
+      <ul>
+        <li>No inflation adjustment — all figures are in nominal dollars.</li>
+        <li>No state income tax or AMT.</li>
+        <li>No 1031 exchange (assumed straight sale with full tax recognition).</li>
+        <li>No HOA fees.</li>
+        <li>No mortgage PMI (assumes ≥20% down or waived).</li>
+        <li>No home improvements added to cost basis (capital improvements would reduce gain at sale).</li>
+      </ul>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ════════════════════════════════════════════════════
+//  CONFIG — all user-adjustable defaults
+// ════════════════════════════════════════════════════
+const CONFIG = {
+  initialInvestment: 100000,
+  horizon: 30,
+  // Stocks
+  stockReturn: 0.105,
+  stockLtcg: 0.15,
+  // RE — Property
+  purchasePrice: 500000,
+  appreciation: 0.038,
+  rentPct: 0.003,       // monthly as fraction of purchase price
+  rentGrowth: 0.03,
+  // RE — Mortgage
+  downPct: 0.20,
+  mortgageRate: 0.0725,
+  refiRate: 0.045,
+  refiYear: 10,         // 0 = no refi
+  refiCost: 0.02,
+  // RE — Expenses (as fraction of property value per year, except mgmt)
+  maintenance: 0.01,
+  capex: 0.01,
+  propTax: 0.008,
+  insurance: 0.0075,
+  vacancy: 0.05,
+  mgmt: 0.10,           // fraction of collected rent
+  // RE — Tax
+  marginalRate: 0.35,
+  recaptureRate: 0.25,
+  reLtcg: 0.15,
+};
+
+// ════════════════════════════════════════════════════
+//  INPUT METADATA — step, min, max, display format
+// ════════════════════════════════════════════════════
+const INPUT_META = {
+  initialInvestment: { step: 10000,  min: 10000,  max: 2000000, fmt: 'money'    },
+  horizon:           { step: 5,      min: 5,      max: 40,      fmt: 'years'    },
+  stockReturn:       { step: 0.001,  min: 0,      max: 0.20,    fmt: 'pct1'     },
+  stockLtcg:         { step: 0.01,   min: 0,      max: 0.25,    fmt: 'pct0'     },
+  purchasePrice:     { step: 50000,  min: 100000, max: 5000000, fmt: 'money'    },
+  appreciation:      { step: 0.001,  min: 0,      max: 0.15,    fmt: 'pct1'     },
+  rentPct:           { step: 0.0005, min: 0.001,  max: 0.02,    fmt: 'pct2'     },
+  rentGrowth:        { step: 0.001,  min: 0,      max: 0.15,    fmt: 'pct1'     },
+  downPct:           { step: 0.05,   min: 0.05,   max: 0.60,    fmt: 'pct0'     },
+  mortgageRate:      { step: 0.001,  min: 0.01,   max: 0.15,    fmt: 'pct2'     },
+  refiRate:          { step: 0.001,  min: 0.01,   max: 0.15,    fmt: 'pct2'     },
+  refiYear:          { step: 1,      min: 0,      max: 40,      fmt: 'refiyear' },
+  refiCost:          { step: 0.001,  min: 0,      max: 0.10,    fmt: 'pct1'     },
+  maintenance:       { step: 0.001,  min: 0,      max: 0.10,    fmt: 'pct1'     },
+  capex:             { step: 0.001,  min: 0,      max: 0.10,    fmt: 'pct1'     },
+  propTax:           { step: 0.0005, min: 0,      max: 0.05,    fmt: 'pct2'     },
+  insurance:         { step: 0.0005, min: 0,      max: 0.05,    fmt: 'pct2'     },
+  vacancy:           { step: 0.01,   min: 0,      max: 0.50,    fmt: 'pct0'     },
+  mgmt:              { step: 0.01,   min: 0,      max: 0.30,    fmt: 'pct0'     },
+  marginalRate:      { step: 0.01,   min: 0,      max: 0.55,    fmt: 'pct0'     },
+  recaptureRate:     { step: 0.01,   min: 0,      max: 0.30,    fmt: 'pct0'     },
+  reLtcg:            { step: 0.01,   min: 0,      max: 0.25,    fmt: 'pct0'     },
+};
+
+// ════════════════════════════════════════════════════
+//  FORMATTERS
+// ════════════════════════════════════════════════════
+function formatMoney(n) {
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 1e6) return sign + '$' + (abs / 1e6).toFixed(2) + 'M';
+  if (abs >= 1000) return sign + '$' + Math.round(abs / 1000) + 'K';
+  return sign + '$' + Math.round(abs).toLocaleString();
+}
+
+function formatDisplayValue(key, val) {
+  const fmt = INPUT_META[key]?.fmt;
+  switch (fmt) {
+    case 'money':    return '$' + val.toLocaleString();
+    case 'years':    return val + ' years';
+    case 'refiyear': return val === 0 ? 'No refi' : 'Year ' + val;
+    case 'pct0':     return (val * 100).toFixed(0) + '%';
+    case 'pct1':     return (val * 100).toFixed(1) + '%';
+    case 'pct2':     return (val * 100).toFixed(2) + '%';
+    default:         return String(val);
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  AMORTIZATION
+//  Returns array of annual rows: [{endBal, interest, principal, payment}]
+//  Index 0 = year 1 ... index n-1 = year n
+// ════════════════════════════════════════════════════
+function buildAmortSchedule(principal, annualRate, termMonths) {
+  if (principal <= 0 || annualRate <= 0 || termMonths <= 0) return [];
+  const r = annualRate / 12;
+  const n = termMonths;
+  const pmt = principal * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+  const numYears = Math.ceil(n / 12);
+  const annual = [];
+  let bal = principal;
+
+  for (let y = 0; y < numYears; y++) {
+    let annInt = 0, annPri = 0;
+    const monthsThisYear = Math.min(12, n - y * 12);
+    for (let m = 0; m < monthsThisYear; m++) {
+      const int = bal * r;
+      const pri = Math.min(pmt - int, bal);
+      annInt += int;
+      annPri += pri;
+      bal = Math.max(bal - pri, 0);
+    }
+    annual.push({ endBal: bal, interest: annInt, principal: annPri, payment: annInt + annPri });
+  }
+  return annual;
+}
+
+// ════════════════════════════════════════════════════
+//  MAIN CALCULATE
+// ════════════════════════════════════════════════════
+function calculate() {
+  const H = CONFIG.horizon;
+  const loanAmount = CONFIG.purchasePrice * (1 - CONFIG.downPct);
+  const purchaseClosingCost = CONFIG.purchasePrice * 0.025;
+
+  // Build full 30yr amortization schedule
+  let amort = buildAmortSchedule(loanAmount, CONFIG.mortgageRate, 360);
+
+  // Apply refi: replace entries from refiYear onward, keeping same payoff date
+  let refiCostAmount = 0;
+  if (CONFIG.refiYear >= 1 && CONFIG.refiYear <= Math.min(H, 30)) {
+    // Balance at START of refi year = endBal after (refiYear-1) full years of payments
+    const balBeforeRefi = CONFIG.refiYear === 1
+      ? loanAmount
+      : amort[CONFIG.refiYear - 2].endBal;
+    refiCostAmount = balBeforeRefi * CONFIG.refiCost;
+    // remainingYears = how many annual periods are left including refiYear itself
+    // e.g. refi at yr 10 with 30yr mortgage: years 10-30 = 21 periods
+    const remainingYears = 31 - CONFIG.refiYear;
+    if (remainingYears > 0 && balBeforeRefi > 0) {
+      const refiSched = buildAmortSchedule(balBeforeRefi, CONFIG.refiRate, remainingYears * 12);
+      for (let i = 0; i < refiSched.length && (CONFIG.refiYear - 1 + i) < amort.length; i++) {
+        amort[CONFIG.refiYear - 1 + i] = refiSched[i];
+      }
+    }
+  }
+
+  // Depreciation setup
+  const buildingValue = CONFIG.purchasePrice * 0.80;
+  const annualDepr = buildingValue / 27.5;
+
+  // Stocks track — year 0: initial investment + purchase closing costs
+  // (closing costs are out-of-pocket for RE investor; stocks investor "also" spends them → invested in stocks)
+  let stocksValue = CONFIG.initialInvestment + purchaseClosingCost;
+  let stocksCostBasis = CONFIG.initialInvestment + purchaseClosingCost;
+
+  // RE's S&P surplus bucket
+  let reSpxBucket = 0;
+  let reSpxCostBasis = 0;
+
+  let accumDepr = 0;
+  const rows = [];
+
+  for (let y = 1; y <= H; y++) {
+    // ── Stocks: compound the full portfolio value ─
+    stocksValue *= (1 + CONFIG.stockReturn);
+
+    // ── Property value ────────────────────────────
+    const propVal = CONFIG.purchasePrice * Math.pow(1 + CONFIG.appreciation, y);
+
+    // ── Mortgage data for this year ───────────────
+    // If year > 30, mortgage is paid off
+    const amortRow = (y <= 30 && amort[y - 1])
+      ? amort[y - 1]
+      : { endBal: 0, interest: 0, principal: 0, payment: 0 };
+    const mortPayment = amortRow.payment;
+    const mortInterest = amortRow.interest;
+    const loanBal = amortRow.endBal;
+
+    // ── One-time refi cost in refi year ──────────
+    const thisRefiCost = (y === CONFIG.refiYear && CONFIG.refiYear >= 1) ? refiCostAmount : 0;
+
+    // ── Rent ──────────────────────────────────────
+    const monthlyRent = CONFIG.purchasePrice * CONFIG.rentPct * Math.pow(1 + CONFIG.rentGrowth, y - 1);
+    const grossRent = monthlyRent * 12;
+    const collectedRent = grossRent * (1 - CONFIG.vacancy);
+
+    // ── Operating expenses ────────────────────────
+    const mgmtFee         = collectedRent * CONFIG.mgmt;
+    const maintenanceCost = propVal * CONFIG.maintenance;
+    const capexCost       = propVal * CONFIG.capex;
+    const propTaxCost     = propVal * CONFIG.propTax;
+    const insuranceCost   = propVal * CONFIG.insurance;
+
+    // ── Operating cash flow (pre-tax) ─────────────
+    const operatingCF = collectedRent
+      - mortPayment
+      - mgmtFee
+      - maintenanceCost
+      - capexCost
+      - propTaxCost
+      - insuranceCost
+      - thisRefiCost;
+
+    // ── Depreciation ──────────────────────────────
+    accumDepr += annualDepr;
+
+    // ── Schedule E taxable income ─────────────────
+    // Deductible: interest (not principal), prop tax, insurance, maintenance, capex, mgmt, depreciation
+    const scheduleEIncome = collectedRent
+      - mortInterest
+      - mgmtFee
+      - maintenanceCost
+      - capexCost
+      - propTaxCost
+      - insuranceCost
+      - annualDepr;
+
+    // Negative = paper loss → tax savings; positive = income → tax owed
+    const taxEffect = -scheduleEIncome * CONFIG.marginalRate;
+
+    // ── Net cash flow (after tax) ─────────────────
+    const netCF = operatingCF + taxEffect;
+
+    // ── Route cash flows ──────────────────────────
+    if (netCF >= 0) {
+      // Positive: grow existing bucket + add surplus
+      reSpxBucket = reSpxBucket * (1 + CONFIG.stockReturn) + netCF;
+      reSpxCostBasis += netCF;
+    } else {
+      // Negative: grow bucket without addition; out-of-pocket goes into stocks track
+      reSpxBucket = reSpxBucket * (1 + CONFIG.stockReturn);
+      const outOfPocket = -netCF;
+      stocksValue += outOfPocket;
+      stocksCostBasis += outOfPocket;
+    }
+
+    // ── RE equity & total ─────────────────────────
+    const equity  = propVal - loanBal;
+    const reTotal = equity + reSpxBucket;
+
+    rows.push({
+      year: y,
+      stocksTotal: stocksValue,
+      propVal,
+      loanBal,
+      equity,
+      grossRent,
+      collectedRent,
+      mortPayment,
+      mortInterest,
+      maintenanceCost,
+      capexCost,
+      propTaxCost,
+      insuranceCost,
+      mgmtFee,
+      thisRefiCost,
+      operatingCF,
+      annualDepr,
+      scheduleEIncome,
+      taxEffect,
+      netCF,
+      accumDepr,
+      reSpxBucket,
+      reTotal,
+      isRefiYear: y === CONFIG.refiYear && CONFIG.refiYear >= 1,
+    });
+  }
+
+  // ── SALE CALCULATIONS ─────────────────────────────
+  const last = rows[H - 1];
+
+  // Stocks
+  const stocksGain = last.stocksTotal - stocksCostBasis;
+  const stocksTaxBill = Math.max(stocksGain, 0) * CONFIG.stockLtcg;
+  const stocksAfterTax = last.stocksTotal - stocksTaxBill;
+
+  // RE property sale
+  const grossSalePrice  = last.propVal;
+  const sellingCosts    = grossSalePrice * 0.06;
+  const netSaleProceeds = grossSalePrice - sellingCosts;
+  const mortPayoff      = last.loanBal;
+  const equityAfterSale = netSaleProceeds - mortPayoff;
+
+  const adjBasis = CONFIG.purchasePrice - last.accumDepr;
+  const totalGain = netSaleProceeds - adjBasis;
+  const recapturedAmt = Math.min(last.accumDepr, Math.max(totalGain, 0));
+  const deprRecaptureTax = recapturedAmt * CONFIG.recaptureRate;
+  const capitalGain = Math.max(totalGain - recapturedAmt, 0);
+  const capitalGainsTax = capitalGain * CONFIG.reLtcg;
+
+  // RE S&P bucket sale
+  const reSpxGain = last.reSpxBucket - reSpxCostBasis;
+  const reSpxTax = Math.max(reSpxGain, 0) * CONFIG.reLtcg;
+  const reSpxAfterTax = last.reSpxBucket - reSpxTax;
+
+  const reAfterTax = equityAfterSale - deprRecaptureTax - capitalGainsTax + reSpxAfterTax;
+
+  return {
+    rows,
+    summary: {
+      stocksAfterTax,
+      reAfterTax,
+      stocksFinalValue: last.stocksTotal,
+      reFinalValue: last.reTotal,
+      equityAfterSale,
+      deprRecaptureTax,
+      capitalGainsTax,
+      reSpxAfterTax,
+      stocksTaxBill,
+    },
+  };
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER: SUMMARY CARDS
+// ════════════════════════════════════════════════════
+function renderSummary(summary) {
+  const { stocksAfterTax, reAfterTax } = summary;
+  const pct = (v, base) => ((v - base) / base * 100).toFixed(0) + '%';
+
+  document.getElementById('stocks-value').textContent = formatMoney(stocksAfterTax);
+  document.getElementById('stocks-sub').textContent =
+    `+${formatMoney(stocksAfterTax - CONFIG.initialInvestment)} · ${pct(stocksAfterTax, CONFIG.initialInvestment)} return`;
+
+  document.getElementById('re-value').textContent = formatMoney(reAfterTax);
+  document.getElementById('re-sub').textContent =
+    `+${formatMoney(reAfterTax - CONFIG.initialInvestment)} · ${pct(reAfterTax, CONFIG.initialInvestment)} return`;
+
+  const delta = reAfterTax - stocksAfterTax;
+  const winnerLabel = delta >= 0 ? 'RE' : 'S&P';
+  const winnerColor = delta >= 0 ? 'var(--amber)' : 'var(--blue)';
+  const winnerEl = document.getElementById('winner-value');
+  winnerEl.textContent = winnerLabel + ' +' + formatMoney(Math.abs(delta));
+  winnerEl.style.color = winnerColor;
+  document.getElementById('winner-sub').textContent =
+    (delta >= 0 ? 'Real Estate' : 'S&P 500') + ' wins by ' + formatMoney(Math.abs(delta));
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER: CHART
+// ════════════════════════════════════════════════════
+let chartInstance = null;
+
+function renderChart(rows) {
+  const labels   = rows.map(r => 'Yr ' + r.year);
+  const stocksData = rows.map(r => Math.round(r.stocksTotal));
+  const reData     = rows.map(r => Math.round(r.reTotal));
+
+  if (chartInstance) {
+    chartInstance.data.labels = labels;
+    chartInstance.data.datasets[0].data = stocksData;
+    chartInstance.data.datasets[1].data = reData;
+    chartInstance.update('none'); // skip animation on update for responsiveness
+    return;
+  }
+
+  const ctx = document.getElementById('chart').getContext('2d');
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'S&P 500 Track',
+          data: stocksData,
+          borderColor: '#4da6ff',
+          backgroundColor: 'rgba(77,166,255,0.08)',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 2,
+          pointHoverRadius: 6,
+          borderWidth: 2.5,
+        },
+        {
+          label: 'Real Estate Track',
+          data: reData,
+          borderColor: '#f0a030',
+          backgroundColor: 'rgba(240,160,48,0.08)',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 2,
+          pointHoverRadius: 6,
+          borderWidth: 2.5,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#888', font: { size: 11 }, boxWidth: 24, padding: 16 } },
+        tooltip: {
+          backgroundColor: '#1e1e1e',
+          borderColor: '#444',
+          borderWidth: 1,
+          titleColor: '#aaa',
+          bodyColor: '#ccc',
+          padding: 10,
+          callbacks: {
+            label: ctx => '  ' + ctx.dataset.label + ': ' + formatMoney(ctx.raw),
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: '#555', font: { size: 10 }, maxTicksLimit: 11 },
+          grid: { color: '#1a1a1a' },
+        },
+        y: {
+          ticks: { color: '#555', font: { size: 10 }, callback: v => formatMoney(v) },
+          grid: { color: '#1a1a1a' },
+        },
+      },
+    },
+  });
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER: YEAR-BY-YEAR TABLE
+// ════════════════════════════════════════════════════
+function renderTable(rows, summary) {
+  document.getElementById('table-head').innerHTML = `<tr>
+    <th>Yr</th>
+    <th class="th-stocks">Stocks Total</th>
+    <th class="th-re">Prop. Value</th>
+    <th class="th-re">Loan Bal</th>
+    <th class="th-re">Equity</th>
+    <th class="th-re">Gross Rent</th>
+    <th class="th-re">Net Rent</th>
+    <th class="th-re">Mort. Pmt</th>
+    <th class="th-re">Oper. CF</th>
+    <th class="th-re">Tax Effect</th>
+    <th class="th-re">Net CF</th>
+    <th class="th-re">RE S&amp;P Bucket</th>
+    <th class="th-re">RE Total</th>
+  </tr>`;
+
+  const body = rows.map(r => {
+    const cfCls   = r.netCF >= 0 ? 'pos' : 'neg';
+    const taxCls  = r.taxEffect >= 0 ? 'pos' : 'neg';
+    const opCls   = r.operatingCF >= 0 ? 'pos' : 'neg';
+    const refiMark = r.isRefiYear ? ' 🔄' : '';
+    return `<tr class="${r.isRefiYear ? 'refi-row' : ''}">
+      <td>${r.year}${refiMark}</td>
+      <td class="hl-stocks">${formatMoney(r.stocksTotal)}</td>
+      <td>${formatMoney(r.propVal)}</td>
+      <td>${formatMoney(r.loanBal)}</td>
+      <td class="hl-re">${formatMoney(r.equity)}</td>
+      <td>${formatMoney(r.grossRent)}</td>
+      <td>${formatMoney(r.collectedRent)}</td>
+      <td>${formatMoney(r.mortPayment)}</td>
+      <td class="${opCls}">${formatMoney(r.operatingCF)}</td>
+      <td class="${taxCls}">${formatMoney(r.taxEffect)}</td>
+      <td class="${cfCls}">${formatMoney(r.netCF)}</td>
+      <td class="hl-re">${formatMoney(r.reSpxBucket)}</td>
+      <td class="hl-re">${formatMoney(r.reTotal)}</td>
+    </tr>`;
+  }).join('');
+
+  const sale = `<tr class="sale-row">
+    <td>Sale</td>
+    <td class="hl-stocks">${formatMoney(summary.stocksAfterTax)}<span style="font-size:9px;color:var(--muted);font-weight:400"> after tax</span></td>
+    <td colspan="3"></td>
+    <td colspan="4" style="text-align:left;color:var(--muted);font-size:10px;font-weight:400">
+      Equity: ${formatMoney(summary.equityAfterSale)} &nbsp;|&nbsp;
+      Depr.recap: −${formatMoney(summary.deprRecaptureTax)} &nbsp;|&nbsp;
+      Cap.gains: −${formatMoney(summary.capitalGainsTax)} &nbsp;|&nbsp;
+      S&P bucket: +${formatMoney(summary.reSpxAfterTax)}
+    </td>
+    <td colspan="1"></td>
+    <td colspan="2" class="hl-re">${formatMoney(summary.reAfterTax)}<span style="font-size:9px;color:var(--muted);font-weight:400"> after tax</span></td>
+  </tr>`;
+
+  document.getElementById('table-body').innerHTML = body + sale;
+}
+
+// ════════════════════════════════════════════════════
+//  RECALCULATE — called on every input change
+// ════════════════════════════════════════════════════
+function recalculate() {
+  const result = calculate();
+  renderSummary(result.summary);
+  renderChart(result.rows);
+  renderTable(result.rows, result.summary);
+}
+
+function updateDisplay(key) {
+  const el = document.getElementById('disp-' + key);
+  if (el) el.textContent = formatDisplayValue(key, CONFIG[key]);
+}
+
+// ════════════════════════════════════════════════════
+//  INPUT BUTTON WIRING
+// ════════════════════════════════════════════════════
+document.querySelectorAll('[data-key][data-dir]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.key;
+    const dir = parseInt(btn.dataset.dir, 10);
+    const meta = INPUT_META[key];
+    if (!meta) return;
+
+    const raw = CONFIG[key] + dir * meta.step;
+    const clamped = Math.min(Math.max(raw, meta.min), meta.max);
+    // Round to avoid floating-point drift
+    const decimals = meta.step < 0.001 ? 5 : meta.step < 0.01 ? 4 : meta.step < 1 ? 3 : 0;
+    CONFIG[key] = Math.round(clamped * Math.pow(10, decimals)) / Math.pow(10, decimals);
+
+    updateDisplay(key);
+    recalculate();
+  });
+});
+
+// ════════════════════════════════════════════════════
+//  MODAL WIRING
+// ════════════════════════════════════════════════════
+document.getElementById('assumptions-btn').addEventListener('click', () => {
+  document.getElementById('modal-overlay').classList.add('open');
+});
+document.getElementById('modal-close').addEventListener('click', () => {
+  document.getElementById('modal-overlay').classList.remove('open');
+});
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) document.getElementById('modal-overlay').classList.remove('open');
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('modal-overlay').classList.remove('open');
+});
+
+// ════════════════════════════════════════════════════
+//  SANITY TESTS
+// ════════════════════════════════════════════════════
+function runTests() {
+  let pass = 0, fail = 0;
+  function assert(cond, msg) {
+    if (cond) { pass++; }
+    else { fail++; console.error('FAIL:', msg); }
+  }
+
+  // Amortization: $400K at 7.25% for 30yr
+  const sched = buildAmortSchedule(400000, 0.0725, 360);
+  assert(sched.length === 30, 'Amort schedule has 30 annual entries');
+  assert(sched[29].endBal < 1, 'Balance after 30yr is ~0 (got ' + sched[29].endBal.toFixed(2) + ')');
+  assert(sched[0].interest > 28000 && sched[0].interest < 30000,
+    'Year1 interest on $400K@7.25% ≈ $28,800 (got ' + sched[0].interest.toFixed(0) + ')');
+  assert(sched[0].payment > 32000 && sched[0].payment < 34000,
+    'Year1 payment ≈ $32,760 (got ' + sched[0].payment.toFixed(0) + ')');
+
+  // Formatters
+  assert(formatMoney(1000000) === '$1.00M', 'formatMoney 1M');
+  assert(formatMoney(842000)  === '$842K',  'formatMoney 842K');
+  assert(formatMoney(-4200)   === '-$4K',   'formatMoney negative');
+  assert(formatDisplayValue('stockReturn', 0.105) === '10.5%', 'formatDisplayValue pct1');
+  assert(formatDisplayValue('refiYear', 0) === 'No refi', 'formatDisplayValue refiYear=0');
+  assert(formatDisplayValue('refiYear', 10) === 'Year 10', 'formatDisplayValue refiYear=10');
+
+  // calculate() smoke test
+  const res = calculate();
+  assert(res.rows.length === CONFIG.horizon, 'calculate rows.length === horizon');
+  assert(res.rows[0].year === 1, 'first row is year 1');
+  assert(res.summary.stocksAfterTax > 0, 'stocks after tax > 0');
+  assert(res.summary.reAfterTax > 0, 're after tax > 0');
+  assert(res.rows[CONFIG.horizon - 1].stocksTotal > res.rows[0].stocksTotal, 'stocks grows');
+  assert(res.rows[CONFIG.horizon - 1].propVal > res.rows[0].propVal, 'property appreciates');
+  // Year 1 should have negative operating CF at 7.25% with 0.3% rent rule
+  assert(res.rows[0].operatingCF < 0, 'Year1 operatingCF is negative at high mortgage rate');
+  // Re sale math consistency
+  const s = res.summary;
+  const reCalc = s.equityAfterSale - s.deprRecaptureTax - s.capitalGainsTax + s.reSpxAfterTax;
+  assert(Math.abs(reCalc - s.reAfterTax) < 1, 'RE after-tax sale math is consistent');
+
+  if (fail === 0) {
+    console.log('%c✓ All ' + pass + ' sanity tests passed', 'color:#50c878;font-weight:bold');
+  } else {
+    console.warn('⚠ ' + fail + ' test(s) failed, ' + pass + ' passed');
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════
+runTests();
+recalculate();
+</script>
+</body>
+</html>
