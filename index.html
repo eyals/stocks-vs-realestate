@@ -172,7 +172,7 @@
 
     .input-row { display: flex; flex-direction: column; gap: 3px; }
     .input-label-row { display: flex; align-items: center; justify-content: space-between; }
-    .input-label { font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+    .input-label { font-size: 10px; color: #c0c0c0; display: flex; align-items: center; gap: 4px; }
     .input-hint { font-size: 9px; color: var(--faint); }
 
     .input-ctrl { display: flex; align-items: center; gap: 4px; }
@@ -201,11 +201,11 @@
     .tip { position: relative; display: inline-flex; cursor: help; }
     .tip-icon {
       width: 14px; height: 14px; border-radius: 50%;
-      background: #2a2a2a; color: var(--muted);
+      background: #2e3f52; color: #6aaee8; border: 1px solid #2a5070;
       font-size: 9px; display: flex; align-items: center; justify-content: center;
       font-style: normal; user-select: none; flex-shrink: 0;
     }
-    .tip:hover .tip-icon { background: #3a3a3a; color: var(--text); }
+    .tip:hover .tip-icon { background: #3a5a78; color: #9fd0ff; border-color: #4a88c0; }
     .tip-text {
       display: none; position: absolute;
       left: 50%; bottom: calc(100% + 8px);
@@ -767,7 +767,7 @@ const INPUT_META = {
   rentPct:           { step: 0.0005, min: 0.001,  max: 0.02,    fmt: 'pct2'     },
   rentGrowth:        { step: 0.001,  min: 0,      max: 0.15,    fmt: 'pct1'     },
   downPct:           { step: 0.05,   min: 0.05,   max: 0.60,    fmt: 'pct0'     },
-  mortgageRate:      { step: 0.001,  min: 0.01,   max: 0.15,    fmt: 'pct2'     },
+  mortgageRate:      { step: 0.0025, min: 0.01,   max: 0.15,    fmt: 'pct2'     },
   refiRate:          { step: 0.001,  min: 0.01,   max: 0.15,    fmt: 'pct2'     },
   refiYear:          { step: 1,      min: 0,      max: 40,      fmt: 'refiyear' },
   refiCost:          { step: 0.001,  min: 0,      max: 0.10,    fmt: 'pct1'     },
