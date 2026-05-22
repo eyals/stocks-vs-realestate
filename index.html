@@ -192,6 +192,7 @@
       flex: 1; background: #070707; border: 1px solid;
       border-radius: 4px; padding: 4px 8px; color: #fff;
       text-align: right; font-size: 12px; font-weight: 500;
+      cursor: ew-resize; user-select: none;
     }
     .group-general .input-display { border-color: #333; }
     .group-stocks .input-display { border-color: var(--blue-border); }
@@ -1235,6 +1236,42 @@ document.querySelectorAll('[data-key][data-dir]').forEach(btn => {
     updateDisplay(key);
     recalculate();
   });
+});
+
+// ════════════════════════════════════════════════════
+//  SCRUB GESTURE — horizontal drag on any input display
+// ════════════════════════════════════════════════════
+let scrub = null;
+
+document.querySelectorAll('.input-display').forEach(el => {
+  el.addEventListener('mousedown', e => {
+    const key = el.id.replace('disp-', '');
+    if (!INPUT_META[key]) return;
+    e.preventDefault();
+    scrub = { key, meta: INPUT_META[key], startX: e.clientX, startVal: CONFIG[key] };
+    document.body.style.cursor = 'ew-resize';
+    document.body.style.userSelect = 'none';
+  });
+});
+
+document.addEventListener('mousemove', e => {
+  if (!scrub) return;
+  const { key, meta, startX, startVal } = scrub;
+  const steps = Math.round((e.clientX - startX) / 4);
+  const raw = startVal + steps * meta.step;
+  const decimals = meta.step < 0.001 ? 5 : meta.step < 0.01 ? 4 : meta.step < 1 ? 3 : 0;
+  const next = Math.round(Math.min(Math.max(raw, meta.min), meta.max) * 10 ** decimals) / 10 ** decimals;
+  if (next === CONFIG[key]) return;
+  CONFIG[key] = next;
+  updateDisplay(key);
+  recalculate();
+});
+
+document.addEventListener('mouseup', () => {
+  if (!scrub) return;
+  scrub = null;
+  document.body.style.cursor = '';
+  document.body.style.userSelect = '';
 });
 
 // ════════════════════════════════════════════════════
