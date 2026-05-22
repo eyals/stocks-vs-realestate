@@ -221,26 +221,28 @@
     /* tooltip that opens downward (for table column headers) */
     .tip-down .tip-text { bottom: auto; top: calc(100% + 6px); }
 
-    /* ── Modal ──────────────────────────────────────── */
-    #modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.75); z-index: 100;
-      align-items: center; justify-content: center;
+    /* ── Assumptions Panel ──────────────────────────── */
+    #assumptions-panel {
+      width: 0; flex-shrink: 0; overflow: hidden;
+      border-left: 1px solid transparent;
+      background: #111;
+      transition: width 0.22s ease, border-color 0.22s ease;
+      position: relative;
     }
-    #modal-overlay.open { display: flex; }
-    #modal-box {
-      background: #161616; border: 1px solid var(--border);
-      border-radius: 12px; padding: 24px 28px;
-      max-width: 580px; width: 90%; max-height: 82vh;
-      overflow-y: auto; position: relative;
+    #assumptions-panel.open {
+      width: 300px;
+      border-color: var(--border);
+      overflow-y: auto;
     }
-    #modal-box h2 { font-size: 16px; margin-bottom: 16px; color: #fff; }
-    #modal-box h3 { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 16px 0 6px; }
-    #modal-box ul { list-style: none; display: flex; flex-direction: column; gap: 5px; }
-    #modal-box li { font-size: 12px; color: var(--text); padding-left: 14px; position: relative; line-height: 1.5; }
-    #modal-box li::before { content: '·'; position: absolute; left: 0; color: var(--muted); }
-    #modal-close { position: absolute; top: 14px; right: 16px; background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; line-height: 1; }
-    #modal-close:hover { color: var(--text); }
+    #assumptions-inner { padding: 20px 18px; width: 300px; box-sizing: border-box; }
+    #assumptions-panel h2 { font-size: 14px; margin-bottom: 14px; color: #fff; font-weight: 600; padding-right: 24px; }
+    #assumptions-panel h3 { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 14px 0 5px; }
+    #assumptions-panel ul { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+    #assumptions-panel li { font-size: 11px; color: var(--text); padding-left: 12px; position: relative; line-height: 1.5; }
+    #assumptions-panel li::before { content: '·'; position: absolute; left: 0; color: var(--muted); }
+    #panel-close { position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; line-height: 1; z-index: 1; }
+    #panel-close:hover { color: var(--text); }
+    #assumptions-btn.active { border-color: var(--blue); color: var(--blue); }
 
     /* ── Scrollbars ─────────────────────────────────── */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -665,10 +667,10 @@
     </div>
   </div>
 
-  <!-- ═══════════════ MODAL ═══════════════ -->
-  <div id="modal-overlay">
-    <div id="modal-box">
-      <button id="modal-close">×</button>
+  <!-- ═══════════════ ASSUMPTIONS PANEL ═══════════════ -->
+  <div id="assumptions-panel" class="open">
+    <button id="panel-close">×</button>
+    <div id="assumptions-inner">
       <h2>Model Assumptions &amp; Notes</h2>
 
       <h3>Stocks Track</h3>
@@ -1276,20 +1278,20 @@ document.addEventListener('mouseup', () => {
 });
 
 // ════════════════════════════════════════════════════
-//  MODAL WIRING
+//  ASSUMPTIONS PANEL WIRING
 // ════════════════════════════════════════════════════
-document.getElementById('assumptions-btn').addEventListener('click', () => {
-  document.getElementById('modal-overlay').classList.add('open');
-});
-document.getElementById('modal-close').addEventListener('click', () => {
-  document.getElementById('modal-overlay').classList.remove('open');
-});
-document.getElementById('modal-overlay').addEventListener('click', e => {
-  if (e.target === e.currentTarget) document.getElementById('modal-overlay').classList.remove('open');
-});
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') document.getElementById('modal-overlay').classList.remove('open');
-});
+function togglePanel(open) {
+  const panel = document.getElementById('assumptions-panel');
+  const btn   = document.getElementById('assumptions-btn');
+  const isOpen = open !== undefined ? open : !panel.classList.contains('open');
+  panel.classList.toggle('open', isOpen);
+  btn.classList.toggle('active', isOpen);
+}
+document.getElementById('assumptions-btn').addEventListener('click', () => togglePanel());
+document.getElementById('panel-close').addEventListener('click', () => togglePanel(false));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') togglePanel(false); });
+// initialize button state to match panel (open by default)
+document.getElementById('assumptions-btn').classList.add('active');
 
 // ════════════════════════════════════════════════════
 //  SANITY TESTS
