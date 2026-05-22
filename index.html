@@ -216,6 +216,8 @@
       color: var(--text); z-index: 50; pointer-events: none; white-space: normal;
     }
     .tip:hover .tip-text { display: block; }
+    /* tooltip that opens downward (for table column headers) */
+    .tip-down .tip-text { bottom: auto; top: calc(100% + 6px); }
 
     /* ── Modal ──────────────────────────────────────── */
     #modal-overlay {
@@ -1141,20 +1143,23 @@ function renderChart(rows) {
 //  RENDER: YEAR-BY-YEAR TABLE
 // ════════════════════════════════════════════════════
 function renderTable(rows, summary) {
+  const th = (cls, label, tip) =>
+    `<th class="${cls}"><span class="tip tip-down">${label}<span class="tip-icon" style="margin-left:4px">i</span><span class="tip-text">${tip}</span></span></th>`;
+
   document.getElementById('table-head').innerHTML = `<tr>
-    <th>Yr</th>
-    <th class="th-stocks">Stocks Total</th>
-    <th class="th-re">Prop. Value</th>
-    <th class="th-re">Loan Bal</th>
-    <th class="th-re">Equity</th>
-    <th class="th-re">Gross Rent</th>
-    <th class="th-re">Net Rent</th>
-    <th class="th-re">Mort. Pmt</th>
-    <th class="th-re">Oper. CF</th>
-    <th class="th-re">Tax Effect</th>
-    <th class="th-re">Net CF</th>
-    <th class="th-re">RE S&amp;P Bucket</th>
-    <th class="th-re">RE Total</th>
+    ${th('', 'Yr', 'Year in the holding period. 🔄 marks the refinance year.')}
+    ${th('th-stocks', 'Stocks Total', 'Pre-tax portfolio value of the S&P 500 track. Includes the initial investment plus any out-of-pocket RE costs added as extra investments in negative-CF years. Tax applied only at final sale.')}
+    ${th('th-re', 'Prop. Value', 'Current market value after annual appreciation. Also the base used to calculate maintenance, CapEx, property tax, and insurance each year.')}
+    ${th('th-re', 'Loan Bal', 'Remaining mortgage principal at year-end. Reaches $0 at loan payoff. With default inputs (30yr mortgage, refi at yr 10 keeping same payoff date), balance hits $0 by year 30.')}
+    ${th('th-re', 'Equity', 'Your ownership stake: Property Value − Loan Balance. Does not account for selling costs (6%) or taxes — those are applied in the Sale row.')}
+    ${th('th-re', 'Gross Rent', 'Annual rent before vacancy. Starts at Purchase Price × Starting Rent % × 12 and compounds at the Annual Rent Growth rate each year.')}
+    ${th('th-re', 'Net Rent', 'Rent actually collected after vacancy. = Gross Rent × (1 − Vacancy %). Property management fee is then taken from this amount.')}
+    ${th('th-re', 'Mort. Pmt', 'Total annual mortgage payment (principal + interest). Only the interest portion is deductible on Schedule E — the principal reduction builds equity but is not a tax deduction.')}
+    ${th('th-re', 'Oper. CF', 'Operating cash flow before tax effect. = Net Rent − Mortgage − Management − Maintenance − CapEx − Property Tax − Insurance (− one-time refi cost in refi year). Does not yet include the tax benefit.')}
+    ${th('th-re', 'Tax Effect', 'Annual Schedule E tax impact at your marginal rate. Green = tax savings (paper loss from depreciation + deductions exceed income). Red = tax bill (rental income exceeds deductions, usually in later years when mortgage interest shrinks).')}
+    ${th('th-re', 'Net CF', 'Cash in/out after all costs and taxes. Green = surplus → invested in RE\'s S&P bucket. Red = out-of-pocket → same amount added to the stocks track as additional investment that year.')}
+    ${th('th-re', 'RE S&P Bucket', 'Accumulated surplus from positive-CF years, invested in S&P 500 and credited to the RE track (not the competing stocks track). Earns the same return as stocks and is taxed as LTCG at final sale.')}
+    ${th('th-re', 'RE Total', 'Total RE track value pre-tax. = Equity + RE S&P Bucket. Sale costs (6%), depreciation recapture tax (25%), and capital gains tax are all applied in the Sale row below.')}
   </tr>`;
 
   const body = rows.map(r => {
