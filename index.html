@@ -173,8 +173,6 @@
     .input-row { display: flex; flex-direction: column; gap: 3px; }
     .input-label-row { display: flex; align-items: center; justify-content: space-between; }
     .input-label { font-size: 10px; color: #c0c0c0; display: flex; align-items: center; gap: 4px; }
-    .input-hint { font-size: 9px; color: var(--faint); }
-
     .input-ctrl { display: flex; align-items: center; gap: 4px; }
     .input-ctrl button {
       width: 24px; height: 26px;
@@ -199,7 +197,9 @@
     .group-re .input-display { border-color: var(--amber-border); }
 
     /* ── Tooltip ────────────────────────────────────── */
-    .tip { position: relative; display: inline-flex; cursor: help; }
+    .tip { position: relative; display: inline-flex; cursor: help; align-items: center; }
+    /* tip anchored to right edge of label row — open left so it stays in sidebar */
+    .input-label-row > .tip .tip-text { left: auto; right: 0; transform: none; }
     .tip-icon {
       width: 14px; height: 14px; border-radius: 50%;
       background: #2e3f52; color: #6aaee8; border: 1px solid #2a5070;
@@ -264,11 +264,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Initial Investment
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Total cash deployed in each track. Both tracks start with exactly this amount. RE purchase closing costs and any negative cash flow years are added to the stocks track as additional investments to keep the comparison fair.</span></span>
-          </span>
-          <span class="input-hint">step $10K</span>
+          <span class="input-label">Initial Investment</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Total cash deployed in each track. Both tracks start with exactly this amount. RE purchase closing costs and any negative cash flow years are added to the stocks track as additional investments to keep the comparison fair.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="initialInvestment" data-dir="-1">−</button>
@@ -279,11 +276,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Horizon
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Years to hold both investments before selling. Typical: 15–30 yrs for a mortgage-based RE comparison. Shorter horizons favor stocks — RE has high upfront costs that take years to overcome.</span></span>
-          </span>
-          <span class="input-hint">step 5 yrs</span>
+          <span class="input-label">Horizon</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Years to hold both investments before selling. Typical: 15–30 yrs for a mortgage-based RE comparison. Shorter horizons favor stocks — RE has high upfront costs that take years to overcome.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="horizon" data-dir="-1">−</button>
@@ -299,11 +293,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Annual Total Return
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">All-in annual return including dividends reinvested. 30yr avg (1994–2024): ~10.5%. Conservative estimate: 7–8%. Bear case: 5–6%. Bull case: 12–13%. Dividends are not taxed annually in this model — all gains taxed as LTCG at end.</span></span>
-          </span>
-          <span class="input-hint">step 0.1%</span>
+          <span class="input-label">Annual Total Return</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">All-in annual return including dividends reinvested. 30yr avg (1994–2024): ~10.5%. Conservative estimate: 7–8%. Bear case: 5–6%. Bull case: 12–13%. Dividends are not taxed annually in this model — all gains taxed as LTCG at end.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="stockReturn" data-dir="-1">−</button>
@@ -314,11 +305,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            LTCG Tax Rate
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Long-term capital gains rate applied when selling. 0% (income &lt;$47K/yr), 15% ($47K–$518K), 20% (above $518K). Most investors fall in the 15% bracket. Applied only at final sale.</span></span>
-          </span>
-          <span class="input-hint">step 1%</span>
+          <span class="input-label">LTCG Tax Rate</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Long-term capital gains rate applied when selling. 0% (income &lt;$47K/yr), 15% ($47K–$518K), 20% (above $518K). Most investors fall in the 15% bracket. Applied only at final sale.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="stockLtcg" data-dir="-1">−</button>
@@ -334,11 +322,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Purchase Price
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Full property purchase price. Down payment % × this determines the loan amount. Starting rent = monthly rent % × this value. Closing costs (2.5%) are calculated on this figure.</span></span>
-          </span>
-          <span class="input-hint">step $50K</span>
+          <span class="input-label">Purchase Price</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Full property purchase price. Down payment % × this determines the loan amount. Starting rent = monthly rent % × this value. Closing costs (2.5%) are calculated on this figure.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="purchasePrice" data-dir="-1">−</button>
@@ -349,11 +334,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Annual Appreciation
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Case-Shiller national HPI 20yr avg: ~3.8%. Coastal metros (NYC, LA, SF): 5–7%. Midwest: 2–3%. Conservative baseline: 3%. Real appreciation (inflation-adjusted) is ~1–1.5%.</span></span>
-          </span>
-          <span class="input-hint">step 0.1%</span>
+          <span class="input-label">Annual Appreciation</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Case-Shiller national HPI 20yr avg: ~3.8%. Coastal metros (NYC, LA, SF): 5–7%. Midwest: 2–3%. Conservative baseline: 3%. Real appreciation (inflation-adjusted) is ~1–1.5%.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="appreciation" data-dir="-1">−</button>
@@ -364,11 +346,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Starting Rent (% of value/mo)
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Monthly rent as a % of property value. The "1% rule" (B/C class cashflow properties): 0.67–1.0%. Luxury/coastal markets (A class): 0.3–0.5%. Example: 0.3% on $500K = $1,500/mo.</span></span>
-          </span>
-          <span class="input-hint">step 0.05%</span>
+          <span class="input-label">Starting Rent (% of value/mo)</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Monthly rent as a % of property value. The "1% rule" (B/C class cashflow properties): 0.67–1.0%. Luxury/coastal markets (A class): 0.3–0.5%. Example: 0.3% on $500K = $1,500/mo.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="rentPct" data-dir="-1">−</button>
@@ -379,11 +358,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Annual Rent Growth
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Historical avg rent growth tracks inflation: ~3%/yr. Hot markets (2020–2022): 8–15%. Conservative: 2%. At 3% for 30yr, rent more than doubles — a key RE advantage over time.</span></span>
-          </span>
-          <span class="input-hint">step 0.1%</span>
+          <span class="input-label">Annual Rent Growth</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Historical avg rent growth tracks inflation: ~3%/yr. Hot markets (2020–2022): 8–15%. Conservative: 2%. At 3% for 30yr, rent more than doubles — a key RE advantage over time.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="rentGrowth" data-dir="-1">−</button>
@@ -399,11 +375,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Down Payment %
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">% of purchase price paid upfront (cash). 20% is conventional — avoids PMI. Less down = more leverage but higher monthly payments. Note: initial investment is assumed fixed at the "General" amount regardless of down %.</span></span>
-          </span>
-          <span class="input-hint">step 5%</span>
+          <span class="input-label">Down Payment %</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">% of purchase price paid upfront (cash). 20% is conventional — avoids PMI. Less down = more leverage but higher monthly payments. Note: initial investment is assumed fixed at the "General" amount regardless of down %.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="downPct" data-dir="-1">−</button>
@@ -414,11 +387,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Mortgage Rate
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">30yr fixed rate at purchase. Current (2024–2025): ~7.0–7.5%. Investor loans run ~0.5–0.75% above primary-home rates. Historical avg since 1990: ~6.5%. 2010–2021 era: 3–4%.</span></span>
-          </span>
-          <span class="input-hint">step 0.1%</span>
+          <span class="input-label">Mortgage Rate</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">30yr fixed rate at purchase. Current (2024–2025): ~7.0–7.5%. Investor loans run ~0.5–0.75% above primary-home rates. Historical avg since 1990: ~6.5%. 2010–2021 era: 3–4%.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="mortgageRate" data-dir="-1">−</button>
@@ -429,11 +399,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Refi Rate
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Rate you expect when refinancing. If current 7%+ rates fall back toward the historical avg (~5–5.5%), a 4–5% refi is plausible within 5–15 yrs. Set Refi Year to 0 to skip refi entirely.</span></span>
-          </span>
-          <span class="input-hint">step 0.1%</span>
+          <span class="input-label">Refi Rate</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Rate you expect when refinancing. If current 7%+ rates fall back toward the historical avg (~5–5.5%), a 4–5% refi is plausible within 5–15 yrs. Set Refi Year to 0 to skip refi entirely.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="refiRate" data-dir="-1">−</button>
@@ -444,11 +411,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Refi Year
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Year to refinance. Set to 0 to skip refi. Refi keeps the same payoff date (does not restart the 30yr clock). Mid-term refi (yr 7–15) is most common. Refi cost is added to that year's cash outflow.</span></span>
-          </span>
-          <span class="input-hint">step 1 · 0 = no refi</span>
+          <span class="input-label">Refi Year</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Year to refinance. Set to 0 to skip refi. Refi keeps the same payoff date (does not restart the 30yr clock). Mid-term refi (yr 7–15) is most common. Refi cost is added to that year's cash outflow.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="refiYear" data-dir="-1">−</button>
@@ -459,11 +423,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Refi Cost %
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Closing costs as % of remaining loan balance. Typical: 1.5–3%. "No-cost" refis roll fees into a slightly higher rate. Set to 0 for a no-cost refi scenario.</span></span>
-          </span>
-          <span class="input-hint">step 0.1%</span>
+          <span class="input-label">Refi Cost %</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Closing costs as % of remaining loan balance. Typical: 1.5–3%. "No-cost" refis roll fees into a slightly higher rate. Set to 0 for a no-cost refi scenario.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="refiCost" data-dir="-1">−</button>
@@ -479,11 +440,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Maintenance
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Routine repairs: paint, fixtures, plumbing, landscaping. Rule of thumb: 1%/yr of value. Older properties (20+ yrs): 1.5–2%. New construction: 0.5%. Applied to current (appreciated) value each year.</span></span>
-          </span>
-          <span class="input-hint">step 0.1%</span>
+          <span class="input-label">Maintenance</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Routine repairs: paint, fixtures, plumbing, landscaping. Rule of thumb: 1%/yr of value. Older properties (20+ yrs): 1.5–2%. New construction: 0.5%. Applied to current (appreciated) value each year.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="maintenance" data-dir="-1">−</button>
@@ -494,11 +452,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            CapEx
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Capital expenditures: roof, HVAC, water heater, appliances, flooring. Budget separately from maintenance. Rule of thumb: 1%/yr. For older properties: 1.5–2%. Applied to current value.</span></span>
-          </span>
-          <span class="input-hint">step 0.1%</span>
+          <span class="input-label">CapEx</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Capital expenditures: roof, HVAC, water heater, appliances, flooring. Budget separately from maintenance. Rule of thumb: 1%/yr. For older properties: 1.5–2%. Applied to current value.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="capex" data-dir="-1">−</button>
@@ -509,11 +464,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Property Tax
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Annual property tax as % of current assessed value. National avg: 0.8–1.1%. High: NJ 2.5%, TX ~2.1%, IL ~2.3%. Low: HI 0.3%, CA ~0.75% (Prop 13). Varies significantly by state and county.</span></span>
-          </span>
-          <span class="input-hint">step 0.05%</span>
+          <span class="input-label">Property Tax</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Annual property tax as % of current assessed value. National avg: 0.8–1.1%. High: NJ 2.5%, TX ~2.1%, IL ~2.3%. Low: HI 0.3%, CA ~0.75% (Prop 13). Varies significantly by state and county.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="propTax" data-dir="-1">−</button>
@@ -524,11 +476,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Insurance
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Landlord/rental property insurance (not standard homeowner's). Avg: 0.5–1%/yr of value. Includes liability coverage. Add extra for flood/hurricane zones: +0.5–1.5%. Applied to current property value.</span></span>
-          </span>
-          <span class="input-hint">step 0.05%</span>
+          <span class="input-label">Insurance</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Landlord/rental property insurance (not standard homeowner's). Avg: 0.5–1%/yr of value. Includes liability coverage. Add extra for flood/hurricane zones: +0.5–1.5%. Applied to current property value.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="insurance" data-dir="-1">−</button>
@@ -539,11 +488,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Vacancy Rate
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">% of potential rent lost to vacancies (tenant turnover, time between leases). Rule of thumb: 5% ≈ 18 days/yr. Tight markets: 2–3%. Soft markets or rural areas: 8–12%. Applied to gross rent.</span></span>
-          </span>
-          <span class="input-hint">step 1%</span>
+          <span class="input-label">Vacancy Rate</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">% of potential rent lost to vacancies (tenant turnover, time between leases). Rule of thumb: 5% ≈ 18 days/yr. Tight markets: 2–3%. Soft markets or rural areas: 8–12%. Applied to gross rent.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="vacancy" data-dir="-1">−</button>
@@ -554,11 +500,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Prop. Management
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Property manager fee as % of collected rent (after vacancy). Standard rate: 8–12%. Full-service (leasing + maintenance coordination): 10–15%. Self-manage = 0% but factor in your time. Set to 0 for self-management.</span></span>
-          </span>
-          <span class="input-hint">step 1% of rent</span>
+          <span class="input-label">Prop. Management</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Property manager fee as % of collected rent (after vacancy). Standard rate: 8–12%. Full-service (leasing + maintenance coordination): 10–15%. Self-manage = 0% but factor in your time. Set to 0 for self-management.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="mgmt" data-dir="-1">−</button>
@@ -574,11 +517,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Marginal Tax Rate
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Your ordinary income marginal rate. Used to value Schedule E deductions (depreciation, interest, etc.). 22% ($89–$190K MFJ), 24% ($190–$364K), 32% ($364–$462K), 35% ($462–$693K), 37% above.</span></span>
-          </span>
-          <span class="input-hint">step 1%</span>
+          <span class="input-label">Marginal Tax Rate</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Your ordinary income marginal rate. Used to value Schedule E deductions (depreciation, interest, etc.). 22% ($89–$190K MFJ), 24% ($190–$364K), 32% ($364–$462K), 35% ($462–$693K), 37% above.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="marginalRate" data-dir="-1">−</button>
@@ -589,11 +529,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            Deprec. Recapture Rate
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">IRS Section 1250 rate on accumulated depreciation at sale. Fixed at 25% by law. Applied to the lesser of total accumulated depreciation or actual gain. Rarely changes without new tax legislation.</span></span>
-          </span>
-          <span class="input-hint">step 1% · IRS: 25%</span>
+          <span class="input-label">Deprec. Recapture Rate</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">IRS Section 1250 rate on accumulated depreciation at sale. Fixed at 25% by law. Applied to the lesser of total accumulated depreciation or actual gain. Rarely changes without new tax legislation.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="recaptureRate" data-dir="-1">−</button>
@@ -604,11 +541,8 @@
 
       <div class="input-row">
         <div class="input-label-row">
-          <span class="input-label">
-            RE LTCG Rate
-            <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Long-term capital gains rate on RE appreciation above the depreciation recapture portion. Same brackets as stocks LTCG. Most investors: 15%. Applied only to the gain remaining after depreciation recapture.</span></span>
-          </span>
-          <span class="input-hint">step 1%</span>
+          <span class="input-label">RE LTCG Rate</span>
+          <span class="tip"><span class="tip-icon">i</span><span class="tip-text">Long-term capital gains rate on RE appreciation above the depreciation recapture portion. Same brackets as stocks LTCG. Most investors: 15%. Applied only to the gain remaining after depreciation recapture.</span></span>
         </div>
         <div class="input-ctrl">
           <button data-key="reLtcg" data-dir="-1">−</button>
