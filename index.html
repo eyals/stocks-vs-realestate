@@ -191,10 +191,14 @@
       border-radius: 4px; padding: 4px 8px; color: #fff;
       text-align: right; font-size: 12px; font-weight: 500;
       cursor: ew-resize; user-select: none;
+      transition: background 0.12s;
     }
     .group-general .input-display { border-color: #333; }
     .group-stocks .input-display { border-color: var(--blue-border); }
     .group-re .input-display { border-color: var(--amber-border); }
+    .group-general .input-row:hover .input-display { background: #131313; }
+    .group-stocks  .input-row:hover .input-display { background: rgba(77,166,255,0.08); }
+    .group-re      .input-row:hover .input-display { background: rgba(240,160,48,0.08); }
 
     /* ── Tooltip ────────────────────────────────────── */
     .tip { position: relative; display: inline-flex; cursor: help; align-items: center; }
